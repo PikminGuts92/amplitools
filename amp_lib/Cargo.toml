@@ -1,0 +1,8 @@
+[package]
+name = "amp_lib"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+
+[dependencies]
+grim = { path = "../../grim/core/grim", features = [ "audio", "midi" ] }

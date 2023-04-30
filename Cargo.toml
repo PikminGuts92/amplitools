@@ -1,0 +1,10 @@
+[workspace]
+members = [
+    "amp_gui",
+    "amp_lib"
+]
+
+[workspace.package]
+version = "0.1.0"
+authors = ["PikminGuts92"]
+edition = "2021"
