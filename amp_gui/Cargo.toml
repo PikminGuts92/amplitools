@@ -5,4 +5,5 @@ authors.workspace = true
 edition.workspace = true
 
 [dependencies]
+amp_lib = { path = "../amp_lib" }
 grim = { path = "../../grim/core/grim" }

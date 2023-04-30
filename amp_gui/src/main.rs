@@ -1,3 +1,4 @@
+use amp_lib::bank::*;
 use grim::io::{FileSearchDepth, PathFinder};
 use grim::midi::{MidiEvent, MidiFile, MidiText, MidiTextType};
 use std::collections::HashMap;
@@ -46,8 +47,19 @@ fn main() {
 
         println!("Found {} bank events", bank_events.len());
 
-        for (pos, name) in bank_events.iter() {
+        /*for (pos, name) in bank_events.iter() {
             println!("{pos}ms: {name}");
+        }*/
+
+        // Open bank file
+        if let Some((_, name)) = bank_events.first() {
+            println!("Opening {name}");
+
+            let bank_path = dir_path.join(name);
+            let bank_file = BankFile::from_file(&bank_path).unwrap();
+
+            println!("Found {} samples", bank_file.samples.len());
+            print!("{bank_file:#?}");
         }
 
         break;
