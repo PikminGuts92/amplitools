@@ -43,6 +43,7 @@ pub struct SdesEntry {
 pub struct BankFile {
     pub samples: Vec<SampleEntry>,
     pub banks: Vec<BankEntry>,
+    pub insts: Vec<InstEntry>,
     pub sdes: Vec<SdesEntry>,
 }
 
