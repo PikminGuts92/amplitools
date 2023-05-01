@@ -6,4 +6,8 @@ edition.workspace = true
 
 [dependencies]
 amp_lib = { path = "../amp_lib" }
+eframe = "0.21.3"
+egui_extras = { version = "0.21.0", features = [ "svg" ] }
 grim = { path = "../../grim/core/grim" }
+kira = "0.7.3"
+tokio = { version = "1.28.0", features = ["full"] }
