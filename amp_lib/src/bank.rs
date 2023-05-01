@@ -25,6 +25,33 @@ pub struct InstEntry {
     pub sdes: u16,
 }
 
+#[derive(Debug)]
+#[repr(u8)]
+pub enum SdesPan {
+    Left = 0x0,
+    Center = 0x40,
+    Right = 0x7F,
+}
+
+impl Default for SdesPan {
+    fn default() -> Self {
+        SdesPan::Center
+    }
+}
+
+impl From<u8> for SdesPan {
+    fn from(num: u8) -> Self {
+        match num {
+            0x0 => Self::Left,
+            0x40 => Self::Center,
+            0x7F => Self::Right,
+            // Default
+            // TODO: Maybe panic?
+            _ => Self::default(),
+        }
+    }
+}
+
 #[derive(Debug, Default)]
 pub struct SdesEntry {
     pub name: String,
@@ -35,7 +62,7 @@ pub struct SdesEntry {
     pub transpose: u8,
 
     pub vol: u8,
-    pub pan: i8,
+    pub pan: SdesPan,
     pub samp: u8,
 }
 
@@ -84,6 +111,45 @@ impl BankFile {
                         }
                     }
                 },
+                b"BANK" => {
+                    bank.read_banks(&mut bnk_file)?;
+                },
+                b"BKNM" => {
+                    let strings = bank.read_strings(&mut bnk_file)?;
+
+                    // Update bank names
+                    for (i, str) in strings.into_iter().enumerate() {
+                        if let Some(bnk) = bank.banks.get_mut(i) {
+                            bnk.name = str;
+                        }
+                    }
+                },
+                b"INST" => {
+                    bank.read_insts(&mut bnk_file)?;
+                },
+                b"INNM" => {
+                    let strings = bank.read_strings(&mut bnk_file)?;
+
+                    // Update inst names
+                    for (i, str) in strings.into_iter().enumerate() {
+                        if let Some(inst) = bank.insts.get_mut(i) {
+                            inst.name = str;
+                        }
+                    }
+                },
+                b"SDES" => {
+                    bank.read_sdes(&mut bnk_file)?;
+                },
+                b"SDNM" => {
+                    let strings = bank.read_strings(&mut bnk_file)?;
+
+                    // Update sdes names
+                    for (i, str) in strings.into_iter().enumerate() {
+                        if let Some(sdes) = bank.sdes.get_mut(i) {
+                            sdes.name = str;
+                        }
+                    }
+                },
                 _ => break
             }
         }
@@ -96,7 +162,7 @@ impl BankFile {
         let entry_count = size / 22;
 
         for _ in 0..entry_count {
-            reader.seek(SeekFrom::Current(4))?;
+            reader.seek(SeekFrom::Current(4))?; // Entry size, always 18
 
             let channels = reader.read_u32()?;
             let sample_rate = reader.read_u32()?;
@@ -109,7 +175,7 @@ impl BankFile {
                 sample_rate,
                 pos,
                 ..Default::default()
-            })
+            });
         }
 
         Ok(())
@@ -117,7 +183,6 @@ impl BankFile {
 
     fn read_strings<T: SimpleReader>(&mut self, reader: &mut T) -> Result<Vec<String>, IOError> {
         let size = reader.read_u32()?;
-
         let end_pos = reader.stream_position()? + size as u64;
 
         reader.seek(SeekFrom::Current(4))?; // Always 1?
@@ -131,11 +196,96 @@ impl BankFile {
 
         Ok(strings)
     }
+
+    fn read_banks<T: SimpleReader>(&mut self, reader: &mut T) -> Result<(), IOError> {
+        let size = reader.read_u32()?;
+        let entry_count = size / 13;
+
+        for _ in 0..entry_count {
+            reader.seek(SeekFrom::Current(4))?; // Entry size, always 9
+            reader.seek(SeekFrom::Current(4))?; // Unknown
+
+            let bank_num = reader.read_u8()?;
+            reader.seek(SeekFrom::Current(2))?; // Unknown
+
+            let inst_count = reader.read_u8()?;
+            reader.seek(SeekFrom::Current(1))?; // Unknown
+
+            self.banks.push(BankEntry {
+                bank_num,
+                inst_count,
+                ..Default::default()
+            });
+        }
+
+        Ok(())
+    }
+
+    fn read_insts<T: SimpleReader>(&mut self, reader: &mut T) -> Result<(), IOError> {
+        let size = reader.read_u32()?;
+        let entry_count = size / 16;
+
+        for _ in 0..entry_count {
+            reader.seek(SeekFrom::Current(4))?; // Entry size, always 12
+            reader.seek(SeekFrom::Current(4))?; // Unknown, always 1?
+
+            let prog = reader.read_u16()?;
+            reader.seek(SeekFrom::Current(4))?; // Unknown
+
+            let sdes = reader.read_u16()?;
+
+            self.insts.push(InstEntry {
+                prog,
+                sdes,
+                ..Default::default()
+            });
+        }
+
+        Ok(())
+    }
+
+    fn read_sdes<T: SimpleReader>(&mut self, reader: &mut T) -> Result<(), IOError> {
+        let size = reader.read_u32()?;
+        let end_pos = reader.stream_position()? + size as u64;
+
+        while reader.stream_position()? < end_pos {
+            reader.seek(SeekFrom::Current(4))?; // Entry size
+
+            let end_bytes = reader.read_u32()?;
+
+            let min_pitch = reader.read_u8()?;
+            let max_pitch = reader.read_u8()?;
+            let base_pitch = reader.read_u8()?;
+            let transpose = reader.read_u8()?;
+
+            reader.seek(SeekFrom::Current(12))?; // Unknown
+
+            let vol = reader.read_u8()?;
+            let pan = reader.read_u8()?.into();
+            let samp = reader.read_u8()?;
+
+            reader.seek(SeekFrom::Current(3 + end_bytes as i64))?;
+
+            self.sdes.push(SdesEntry {
+                min_pitch,
+                max_pitch,
+                base_pitch,
+                transpose,
+                vol,
+                pan,
+                samp,
+                ..Default::default()
+            });
+        }
+
+        Ok(())
+    }
 }
 
 pub (crate) trait SimpleReader: Read + Seek {
     fn read_i8(&mut self) -> Result<i8, IOError>;
     fn read_u8(&mut self) -> Result<u8, IOError>;
+    fn read_u16(&mut self) -> Result<u16, IOError>;
     fn read_u32(&mut self) -> Result<u32, IOError>;
     fn read_bytes<const N: usize>(&mut self, b: &mut [u8; N]) -> Result<(), IOError>;
     fn read_string(&mut self) -> Result<String, IOError>;
@@ -148,6 +298,10 @@ impl SimpleReader for File {
 
     fn read_u8(&mut self) -> Result<u8, IOError> {
         read_u8(self)
+    }
+
+    fn read_u16(&mut self) -> Result<u16, IOError> {
+        read_u16(self)
     }
 
     fn read_u32(&mut self) -> Result<u32, IOError> {
@@ -175,6 +329,13 @@ fn read_u8<T: Read + Seek>(reader: &mut T)-> Result<u8, IOError> {
     read_bytes(reader, &mut b)?;
 
     Ok(u8::from_le_bytes(b))
+}
+
+fn read_u16<T: Read + Seek>(reader: &mut T)-> Result<u16, IOError> {
+    let mut b = [0u8; std::mem::size_of::<u16>()];
+    read_bytes(reader, &mut b)?;
+
+    Ok(u16::from_le_bytes(b))
 }
 
 fn read_u32<T: Read + Seek>(reader: &mut T)-> Result<u32, IOError> {
