@@ -1,6 +1,9 @@
-use std::fs::File;
+use crate::SimpleReader;
 use std::io::{Error as IOError, Read, Seek, SeekFrom};
 use std::path::Path;
+
+const VAG_BYTES_PER_BLOCK: usize = 16;
+const VAG_SAMPLES_PER_BLOCK: usize = 28;
 
 #[derive(Debug, Default)]
 pub struct SampleEntry {
@@ -157,6 +160,42 @@ impl BankFile {
         Ok(bank)
     }
 
+    pub fn extract_samples_to_dir<T: AsRef<Path>, S: AsRef<Path>>(&self, sample_file_path: T, output_dir_path: S) -> Result<(), IOError> {
+        let mut sample_file = std::fs::OpenOptions::new()
+            .read(true)
+            .open(sample_file_path)
+            .unwrap();
+
+        let output_dir = output_dir_path.as_ref();
+
+        if !output_dir.exists() {
+            std::fs::create_dir_all(output_dir)?;
+        }
+
+        for sample in self.samples.iter() {
+            let output_path = output_dir.join(format!("{}.wav", sample.file_name));
+
+            let mut decoder = grim::audio::VAGDecoder::new();
+            let mut vag_block = [0u8; VAG_BYTES_PER_BLOCK];
+            sample_file.seek(SeekFrom::Start(sample.pos as u64))?;
+
+            let mut sample_stream = Vec::new();
+
+            // Read until 0x07 flag or EOF
+            while sample_file.read_exact(&mut vag_block).is_ok() && vag_block[1] != 0x07 {
+                // Decode sample
+                let decoded_samples = decoder.decode_block(&vag_block);
+                sample_stream.append(&mut decoded_samples.to_vec());
+            }
+
+            // Create wav file
+            let wav = grim::audio::WavEncoder::new(sample_stream.as_slice(), sample.channels as u16, sample.sample_rate);
+            wav.encode_to_file(output_path).unwrap(); // TODO: Properly handle error
+        }
+
+        Ok(())
+    }
+
     fn read_samples<T: SimpleReader>(&mut self, reader: &mut T) -> Result<(), IOError> {
         let size = reader.read_u32()?;
         let entry_count = size / 22;
@@ -280,81 +319,4 @@ impl BankFile {
 
         Ok(())
     }
-}
-
-pub (crate) trait SimpleReader: Read + Seek {
-    fn read_i8(&mut self) -> Result<i8, IOError>;
-    fn read_u8(&mut self) -> Result<u8, IOError>;
-    fn read_u16(&mut self) -> Result<u16, IOError>;
-    fn read_u32(&mut self) -> Result<u32, IOError>;
-    fn read_bytes<const N: usize>(&mut self, b: &mut [u8; N]) -> Result<(), IOError>;
-    fn read_string(&mut self) -> Result<String, IOError>;
-}
-
-impl SimpleReader for File {
-    fn read_i8(&mut self) -> Result<i8, IOError> {
-        read_i8(self)
-    }
-
-    fn read_u8(&mut self) -> Result<u8, IOError> {
-        read_u8(self)
-    }
-
-    fn read_u16(&mut self) -> Result<u16, IOError> {
-        read_u16(self)
-    }
-
-    fn read_u32(&mut self) -> Result<u32, IOError> {
-        read_u32(self)
-    }
-
-    fn read_bytes<const N: usize>(&mut self, b: &mut [u8; N]) -> Result<(), IOError> {
-        read_bytes(self, b)
-    }
-
-    fn read_string(&mut self) -> Result<String, IOError> {
-        read_string(self)
-    }
-}
-
-fn read_i8<T: Read + Seek>(reader: &mut T)-> Result<i8, IOError> {
-    let mut b = [0u8; std::mem::size_of::<i8>()];
-    read_bytes(reader, &mut b)?;
-
-    Ok(i8::from_le_bytes(b))
-}
-
-fn read_u8<T: Read + Seek>(reader: &mut T)-> Result<u8, IOError> {
-    let mut b = [0u8; std::mem::size_of::<u8>()];
-    read_bytes(reader, &mut b)?;
-
-    Ok(u8::from_le_bytes(b))
-}
-
-fn read_u16<T: Read + Seek>(reader: &mut T)-> Result<u16, IOError> {
-    let mut b = [0u8; std::mem::size_of::<u16>()];
-    read_bytes(reader, &mut b)?;
-
-    Ok(u16::from_le_bytes(b))
-}
-
-fn read_u32<T: Read + Seek>(reader: &mut T)-> Result<u32, IOError> {
-    let mut b = [0u8; std::mem::size_of::<u32>()];
-    read_bytes(reader, &mut b)?;
-
-    Ok(u32::from_le_bytes(b))
-}
-
-fn read_bytes<const N: usize, T: Read + Seek>(reader: &mut T, b: &mut [u8; N]) -> Result<(), IOError> {
-    reader.read_exact(b)
-}
-
-fn read_string<T: Read + Seek>(reader: &mut T)-> Result<String, IOError> {
-    let size = read_u32(reader)?;
-    let mut data = vec![0u8; size as usize];
-
-    reader.read_exact(&mut data)?;
-
-    // TODO: Properly map error
-    Ok(String::from_utf8(data).unwrap())
 }
