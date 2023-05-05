@@ -183,7 +183,7 @@ impl BankFile {
 
             // Read until 0x07 flag or EOF
             while sample_file.read_exact(&mut vag_block).is_ok() && vag_block[1] != 0x07 {
-                // Decode sample
+                // Decode block into samples
                 let decoded_samples = decoder.decode_block(&vag_block);
                 sample_stream.append(&mut decoded_samples.to_vec());
             }
