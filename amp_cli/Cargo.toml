@@ -1,0 +1,10 @@
+[package]
+name = "amp_cli"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+
+[dependencies]
+amp_lib = { path = "../amp_lib" }
+clap = { version = "4.2.7", features = ["derive"] }
+grim = { path = "../../grim/core/grim" }

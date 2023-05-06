@@ -1,5 +1,6 @@
 [workspace]
 members = [
+    "amp_cli",
     "amp_gui",
     "amp_lib"
 ]

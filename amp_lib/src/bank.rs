@@ -173,7 +173,7 @@ impl BankFile {
         }
 
         for sample in self.samples.iter() {
-            let output_path = output_dir.join(format!("{}.wav", sample.file_name));
+            let output_path = output_dir.join(format!("{}.wav", sample.name));
 
             let mut decoder = grim::audio::VAGDecoder::new();
             let mut vag_block = [0u8; VAG_BYTES_PER_BLOCK];
