@@ -8,6 +8,6 @@ edition.workspace = true
 amp_lib = { path = "../amp_lib" }
 eframe = "0.22.0"
 egui_extras = { version = "0.22.0", features = [ "svg" ] }
-grim = { path = "../../grim/core/grim" }
+grim = { workspace = true }
 kira = "0.8.3"
 tokio = { version = "1.28.2", features = ["full"] }
