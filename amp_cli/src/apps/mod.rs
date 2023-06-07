@@ -1,7 +1,9 @@
 mod bnk2wav;
+mod extract;
 
 use bnk2wav::*;
 use clap::{Parser, Subcommand};
+use extract::*;
 
 // From Cargo.toml
 const PKG_NAME: &str = env!("CARGO_PKG_NAME");
@@ -22,6 +24,8 @@ struct Options {
 enum SubCommand {
     #[command(name = "bnk2wav", about = "Extract audio samples from .bnk")]
     Bnk2Wav(Bnk2WavApp),
+    #[command(name = "extract", about = "Extract content from .ark")]
+    Extract(ExtractApp),
 }
 
 #[derive(Debug)]
@@ -39,6 +43,7 @@ impl AmpTool {
     pub fn run(self) -> Result<(), Box<dyn std::error::Error>> {
         match self.options.commands {
             SubCommand::Bnk2Wav(app) => app.process(),
+            SubCommand::Extract(app) => app.process(),
         }
     }
 }
