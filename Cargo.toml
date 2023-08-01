@@ -4,6 +4,7 @@ members = [
     "amp_gui",
     "amp_lib"
 ]
+resolver = "2" # Needed because of grim
 
 [workspace.package]
 version = "0.1.0"

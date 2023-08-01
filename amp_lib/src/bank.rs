@@ -1,34 +1,35 @@
 use crate::SimpleReader;
-use std::io::{Error as IOError, Read, Seek, SeekFrom};
+use serde::{Deserialize, Serialize};
+use std::io::{Error as IOError, Read, Seek, SeekFrom, Write};
 use std::path::Path;
 
 const VAG_BYTES_PER_BLOCK: usize = 16;
 const VAG_SAMPLES_PER_BLOCK: usize = 28;
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Serialize)]
 pub struct SampleEntry {
     pub name: String,
     pub file_name: String,
-    pub channels: u32,
-    pub sample_rate: u32,
-    pub pos: u32,
+    #[serde(skip)] pub channels: u32,
+    #[serde(skip)] pub sample_rate: u32,
+    #[serde(skip)] pub pos: u32,
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Serialize)]
 pub struct BankEntry {
     pub name: String,
     pub bank_num: u8,
     pub inst_count: u8,
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Serialize)]
 pub struct InstEntry {
     pub name: String,
     pub prog: u16,
     pub sdes: u16,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 #[repr(u8)]
 pub enum SdesPan {
     Left = 0x0,
@@ -55,7 +56,7 @@ impl From<u8> for SdesPan {
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Serialize)]
 pub struct SdesEntry {
     pub name: String,
 
@@ -69,7 +70,7 @@ pub struct SdesEntry {
     pub samp: u8,
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Serialize)]
 pub struct BankFile {
     pub samples: Vec<SampleEntry>,
     pub banks: Vec<BankEntry>,
@@ -172,6 +173,7 @@ impl BankFile {
             std::fs::create_dir_all(output_dir)?;
         }
 
+        // Write samples
         for sample in self.samples.iter() {
             let output_path = output_dir.join(format!("{}.wav", sample.name));
 
@@ -192,6 +194,13 @@ impl BankFile {
             let wav = grim::audio::WavEncoder::new(sample_stream.as_slice(), sample.channels as u16, sample.sample_rate);
             wav.encode_to_file(output_path).unwrap(); // TODO: Properly handle error
         }
+
+        // Write config file
+        let output_json_path = output_dir.join("bank.json");
+        let json_file = grim::io::create_new_file(output_json_path).unwrap();
+        serde_json::to_writer_pretty(json_file, self).unwrap();
+
+        //ron_file.write(ron_str.as_bytes()).unwrap();
 
         Ok(())
     }
