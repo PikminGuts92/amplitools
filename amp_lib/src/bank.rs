@@ -78,6 +78,40 @@ pub struct BankFile {
     pub sdes: Vec<SdesEntry>,
 }
 
+#[derive(Debug, Default, Serialize)]
+pub struct StructuredSample {
+    pub name: String,
+    pub file_name: String,
+}
+
+#[derive(Debug, Default, Serialize)]
+pub struct StructuredSde {
+    pub name: String,
+
+    pub min_pitch: u8,
+    pub max_pitch: u8,
+    pub base_pitch: u8,
+    pub transpose: u8,
+
+    pub vol: u8,
+    pub pan: SdesPan,
+    pub samp: StructuredSample,
+}
+
+#[derive(Debug, Default, Serialize)]
+pub struct StructuredInstrument {
+    pub name: String,
+    pub prog: u16,
+    pub sdes: Vec<StructuredSde>,
+}
+
+#[derive(Debug, Default, Serialize)]
+pub struct StructuredBank {
+    pub name: String,
+    //pub samples: Vec<SampleEntry>,
+    //pub instruments: 
+}
+
 impl BankFile {
     pub fn from_file<T: AsRef<Path>>(path: T) -> Result<Self, IOError> {
         // TODO: Make this work with generic stream
