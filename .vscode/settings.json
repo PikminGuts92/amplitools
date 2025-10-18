@@ -1,7 +1,7 @@
 {
     "rust-analyzer.cargo.features": [
-        "grim/audio",
-        "grim/midi"
+        "pikaxe/audio",
+        "pikaxe/midi"
     ],
     "rust-analyzer.inlayHints.chainingHints.enable": false,
     "rust-analyzer.inlayHints.typeHints.enable": false,

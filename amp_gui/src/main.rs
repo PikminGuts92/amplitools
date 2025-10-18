@@ -30,11 +30,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     app.open_directory(dir_path.into());
 
     let ops = NativeOptions {
-        drag_and_drop_support: true,
         // icon_data: Some(icon),
-        min_window_size: Some([1000., 600.].into()),
-        follow_system_theme: false, // Always dark by default
-        default_theme: eframe::Theme::Dark,
+        viewport: eframe::egui::ViewportBuilder::default()
+            .with_min_inner_size([1000., 600.]) // min_window_size?
+            .with_drag_and_drop(true),
         //#[cfg(feature = "dev")] initial_window_pos: Some([2400., 100.].into()),
         //#[cfg(feature = "dev")] always_on_top: true,
         ..NativeOptions::default()
@@ -43,7 +42,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     run_native(
         "Amped by PikminGuts92",
         ops,
-        Box::new(|_cc| Box::new(app))
+        Box::new(|cc| {
+            cc.egui_ctx.set_visuals(eframe::egui::Visuals::dark());
+
+            Ok(Box::new(app))
+        })
     )
     .map_err(|e| e.into())
 }
