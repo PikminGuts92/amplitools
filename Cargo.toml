@@ -4,7 +4,7 @@ members = [
     "amp_gui",
     "amp_lib"
 ]
-resolver = "2" # Needed because of grim
+resolver = "2" # Needed because of pikaxe
 
 [workspace.package]
 version = "0.1.0"
@@ -12,4 +12,5 @@ authors = ["PikminGuts92"]
 edition = "2021"
 
 [workspace.dependencies]
-grim = { path = "../grim/core/grim", features = [ "audio", "midi" ] }
+#pikaxe = { path = "../grim/core/pikaxe", features = [ "audio", "midi" ] }
+pikaxe = { git = "https://github.com/PikminGuts92/pikaxe.git", branch = "dev", features = [ "audio", "midi" ] }

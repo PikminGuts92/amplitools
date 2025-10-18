@@ -211,7 +211,7 @@ impl BankFile {
         for sample in self.samples.iter() {
             let output_path = output_dir.join(format!("{}.wav", sample.name));
 
-            let mut decoder = grim::audio::VAGDecoder::new();
+            let mut decoder = pikaxe::audio::VAGDecoder::new();
             let mut vag_block = [0u8; VAG_BYTES_PER_BLOCK];
             sample_file.seek(SeekFrom::Start(sample.pos as u64))?;
 
@@ -225,13 +225,13 @@ impl BankFile {
             }
 
             // Create wav file
-            let wav = grim::audio::WavEncoder::new(sample_stream.as_slice(), sample.channels as u16, sample.sample_rate);
+            let wav = pikaxe::audio::WavEncoder::new(sample_stream.as_slice(), sample.channels as u16, sample.sample_rate);
             wav.encode_to_file(output_path).unwrap(); // TODO: Properly handle error
         }
 
         // Write config file
         let output_json_path = output_dir.join("bank.json");
-        let json_file = grim::io::create_new_file(output_json_path).unwrap();
+        let json_file = pikaxe::io::create_new_file(output_json_path).unwrap();
         serde_json::to_writer_pretty(json_file, self).unwrap();
 
         //ron_file.write(ron_str.as_bytes()).unwrap();

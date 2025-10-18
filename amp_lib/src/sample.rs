@@ -73,7 +73,7 @@ impl SampleFile {
         for (i, sample) in self.samples.iter().enumerate() {
             let output_path = output_dir.join(format!("sample_{}.wav", i));
 
-            let mut decoder = grim::audio::VAGDecoder::new();
+            let mut decoder = pikaxe::audio::VAGDecoder::new();
             let mut sample_stream = Vec::new();
 
             for block in sample.blocks.iter() {
@@ -82,7 +82,7 @@ impl SampleFile {
             }
 
             // Create wav file
-            let wav = grim::audio::WavEncoder::new(sample_stream.as_slice(), 1, 22_050);
+            let wav = pikaxe::audio::WavEncoder::new(sample_stream.as_slice(), 1, 22_050);
             wav.encode_to_file(output_path)?;
         }
 

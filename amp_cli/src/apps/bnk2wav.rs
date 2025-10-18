@@ -1,7 +1,7 @@
 use crate::apps::SubApp;
 use amp_lib::bank::*;
 use amp_lib::sample::SampleFile;
-use grim::io::{FileSearchDepth, PathFinder};
+use pikaxe::io::{FileSearchDepth, PathFinder};
 use clap::Parser;
 use std::fmt::Debug;
 use std::path::{Path, PathBuf};

@@ -1,7 +1,7 @@
 use amp_lib::bank::*;
 use eframe::{egui::{self, Align, Align2, Color32, FontId, Pos2, RichText, Visuals, Widget, TextBuffer}, glow};
-use grim::io::{FileSearchDepth, PathFinder};
-use grim::midi::{MidiEvent, MidiFile, MidiText, MidiTextType};
+use pikaxe::io::{FileSearchDepth, PathFinder};
+use pikaxe::midi::{MidiEvent, MidiFile, MidiText, MidiTextType};
 use std::path::{Path, PathBuf};
 use super::VERSION;
 

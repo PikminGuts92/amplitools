@@ -1,7 +1,7 @@
 use crate::apps::SubApp;
 use amp_lib::bank::*;
-use grim::ark::{Ark, ArkOffsetEntry};
-use grim::io::{FileSearchDepth, PathFinder};
+use pikaxe::ark::{Ark, ArkOffsetEntry};
+use pikaxe::io::{FileSearchDepth, PathFinder};
 use clap::Parser;
 use std::fmt::Debug;
 use std::io::Write;
@@ -39,11 +39,11 @@ impl SubApp for ExtractApp {
             let (stream, entry_path) = match &entry.path {
                 p @ _ if p.ends_with(".txt.bin") => {
                     // Convert bin to txt
-                    let mut mem_stream = grim::io::MemoryStream::from_slice_as_read(&stream);
-                    let mut reader = Box::new(grim::io::BinaryStream::from_stream_with_endian(&mut mem_stream, grim::io::IOEndian::Little));
+                    let mut mem_stream = pikaxe::io::MemoryStream::from_slice_as_read(&stream);
+                    let mut reader = Box::new(pikaxe::io::BinaryStream::from_stream_with_endian(&mut mem_stream, pikaxe::io::IOEndian::Little));
 
-                    let mut dta = grim::dta::RootData::new();
-                    dta.load_with_settings(&mut reader, grim::dta::DataArrayIOSettings::Amplitude)?;
+                    let mut dta = pikaxe::dta::RootData::new();
+                    dta.load_with_settings(&mut reader, pikaxe::dta::DataArrayIOSettings::Amplitude)?;
 
                     let mut writer = std::io::BufWriter::new(Vec::new());
                     dta.print(&mut writer)?;
@@ -68,7 +68,7 @@ impl SubApp for ExtractApp {
             let file_path = output_path.join(&entry_path);
 
             // Write to file
-            let mut file = grim::io::create_new_file(&file_path)?;
+            let mut file = pikaxe::io::create_new_file(&file_path)?;
             file.write_all(&stream)?;
             println!("Wrote \"{}\"", &entry_path);
 

@@ -7,4 +7,4 @@ edition.workspace = true
 [dependencies]
 amp_lib = { path = "../amp_lib" }
 clap = { version = "4.3.0", features = ["derive"] }
-grim = { workspace = true }
+pikaxe = { workspace = true }
