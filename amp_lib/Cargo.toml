@@ -7,4 +7,4 @@ edition.workspace = true
 [dependencies]
 pikaxe = { workspace = true }
 serde = { version = "1", features = ["derive"] }
-serde_json = "1.0.104"
+serde_json = "1.0.145"
