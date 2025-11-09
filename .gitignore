@@ -1,3 +1,4 @@
 .env
+.rust-analyzer
 .vscode
 /target
